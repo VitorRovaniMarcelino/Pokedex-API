@@ -18,4 +18,7 @@ Com ela, você pode consultar dados como nome, tipo, habilidades e muito mais!
 - Buscar Pokémon por **nome** ou **ID**
 - Retornar informações detalhadas (Elementos, estatísticas, etc.)
 
-- Disponível em: https://vitorrovanimarcelino.github.io/Pokedex-API/
+---
+
+## Disponível em:
+- https://vitorrovanimarcelino.github.io/Pokedex-API/
