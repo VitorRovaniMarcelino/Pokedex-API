@@ -70,11 +70,15 @@ searchInput.oninput = () => {
     const filteredPokemons = allPokemons.filter(pokemon => pokemon.name.toLowerCase().includes(searchTerm));
     renderPokemons(filteredPokemons);
 };
+
 searchId.oninput = () => {
-    const searchTerm = searchInput.value.toLowerCase();
-    const filteredPokemons = allPokemons.filter(pokemon => pokemon.id.toLowerCase().includes(searchTerm));
+    const searchTerm = searchId.value.toLowerCase(); // pega o valor do input de ID
+    const filteredPokemons = allPokemons.filter(pokemon => 
+        pokemon.id.toString().includes(searchTerm) // converte id para string
+    );
     renderPokemons(filteredPokemons);
 };
+
 
 // Carrega todos os Pokémon da API
 async function loadAllPokemons() {
