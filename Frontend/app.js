@@ -1,6 +1,6 @@
 const pokemonListEl = document.getElementById("pokemon-list");
 const searchInput = document.getElementById("search");
-const searchIdInput = document.getElementById("search-id");
+const searchId = document.getElementById("search-id");
 const loadingEl = document.getElementById("loading");
 const modal = document.getElementById("pokemon-modal");
 const modalBody = document.getElementById("modal-body");
@@ -14,35 +14,45 @@ const typeColors = {
     steel: '#B7B7CE', fairy: '#D685AD'
 };
 
+// Array para armazenar todos os Pokémon carregados
 let allPokemons = [];
 
-function renderPokemons(list) {
+// Renderiza a lista de Pokémon na tela
+function renderPokemons(pokemonList) {
     pokemonListEl.innerHTML = "";
-    list.forEach(p => {
+
+    pokemonList.forEach(pokemon => {
         const card = document.createElement("div");
         card.className = "pokemon-card";
+
         card.innerHTML = `
-            <img src="${p.sprites.other['official-artwork'].front_default}" alt="${p.name}">
-            <h5>${p.name}</h5>
-            <div>${p.types.map(t => `<span class="badge-type" style="background-color:${typeColors[t.type.name]}">${t.type.name}</span>`).join("")}</div>
+            <h4>
+                <img src="${pokemon.sprites.other['official-artwork'].front_default}" alt="${pokemon.name}">
+            </h4>
+            <br>
+            <h5> #${pokemon.id} <br> ${pokemon.name}</h5>
+            <div>${pokemon.types.map(typeInfo => `<span class="badge-type" style="background-color:${typeColors[typeInfo.type.name]}">${typeInfo.type.name}</span>`).join("")}</div>
         `;
-        card.onclick = () => showModal(p);
+
+        card.onclick = () => showPokemonModal(pokemon);
+
         pokemonListEl.appendChild(card);
     });
 }
 
-function showModal(p) {
+// Abre o modal com os detalhes de um Pokémon
+function showPokemonModal(pokemon) {
     modalBody.innerHTML = `
-        <h2>${p.name} (ID: ${p.id})</h2>
-        <img src="${p.sprites.other['official-artwork'].front_default}" alt="${p.name}">
+        <h2>${pokemon.name} (ID: ${pokemon.id})</h2>
+        <img src="${pokemon.sprites.other['official-artwork'].front_default}" alt="${pokemon.name}">
         <div class="modal-types">
-            ${p.types.map(t => `<span class="badge-type" style="background-color:${typeColors[t.type.name]}">${t.type.name}</span>`).join("")}
+            ${pokemon.types.map(typeInfo => `<span class="badge-type" style="background-color:${typeColors[typeInfo.type.name]}">${typeInfo.type.name}</span>`).join("")}
         </div>
         <div class="modal-stats">
-            ${p.stats.map(s => `
-                <p>${s.stat.name.toUpperCase()}</p>
+            ${pokemon.stats.map(statInfo => `
+                <p>${statInfo.stat.name.toUpperCase()}</p>
                 <div class="stat-bar">
-                    <div class="stat-bar-inner stat-${s.stat.name.replace(' ', '-').toLowerCase()}" style="width:${s.base_stat > 100 ? 100 : s.base_stat}%;"></div>
+                    <div class="stat-bar-inner stat-${statInfo.stat.name.replace(' ', '-').toLowerCase()}" style="width:${statInfo.base_stat > 100 ? 100 : statInfo.base_stat}%;"></div>
                 </div>
             `).join('')}
         </div>
@@ -50,36 +60,42 @@ function showModal(p) {
     modal.style.display = "flex";
 }
 
+// Fecha o modal
 closeModalBtn.onclick = () => modal.style.display = "none";
-modal.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
+modal.onclick = event => { if (event.target === modal) modal.style.display = "none"; };
 
+// Busca dinâmica por nome enquanto o usuário digita
 searchInput.oninput = () => {
-    const term = searchInput.value.toLowerCase();
-    renderPokemons(allPokemons.filter(p => p.name.toLowerCase().includes(term)));
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredPokemons = allPokemons.filter(pokemon => pokemon.name.toLowerCase().includes(searchTerm));
+    renderPokemons(filteredPokemons);
+};
+searchId.oninput = () => {
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredPokemons = allPokemons.filter(pokemon => pokemon.id.toLowerCase().includes(searchTerm));
+    renderPokemons(filteredPokemons);
 };
 
-searchIdInput.onchange = () => {
-    const id = searchIdInput.value;
-    if (!id) return;
-    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-        .then(r => r.json())
-        .then(p => showModal(p))
-        .catch(() => alert("Pokémon não encontrado!"));
-};
-
-async function loadPokemons() {
+// Carrega todos os Pokémon da API
+async function loadAllPokemons() {
     loadingEl.style.display = "block";
-    try {
-        const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
-        const data = await res.json();
-        const pokemons = await Promise.all(data.results.map(p => fetch(p.url).then(r => r.json())));
-        allPokemons = pokemons;
-        loadingEl.style.display = "none";
-        renderPokemons(allPokemons);
-    } catch (err) {
-        loadingEl.textContent = "Erro ao carregar Pokémon.";
-        console.error(err);
+
+    const response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
+    const data = await response.json();
+
+    const detailedPokemons = [];
+
+    // Busca detalhes de cada Pokémon em ordem
+    for (const pokemonSummary of data.results) {
+            const pokemonDetails = await fetch(pokemonSummary.url).then(res => res.json());
+            detailedPokemons.push(pokemonDetails);
     }
+
+    allPokemons = detailedPokemons;
+    loadingEl.style.display = "none";
+    renderPokemons(allPokemons);
+
 }
 
-loadPokemons();
+// Inicializa a Pokédex
+window.onload = loadAllPokemons;
